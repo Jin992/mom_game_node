@@ -2670,6 +2670,16 @@ dependencies = [
  "bevy_replicon_renet",
  "bevy_third_person_camera",
  "clap",
+ "mmo_game_shared",
+ "serde",
+]
+
+[[package]]
+name = "mmo_game_shared"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+ "bevy_replicon",
  "serde",
 ]
 

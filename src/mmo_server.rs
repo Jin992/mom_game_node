@@ -1,30 +1,21 @@
 
 use std::{
-    error::Error,
-    net::{IpAddr, Ipv4Addr, SocketAddr, UdpSocket},
+    net::{Ipv4Addr, UdpSocket},
     time::SystemTime,
 };
 
-use bevy::{
-    color::palettes::css::GREEN,
-    prelude::*,
-    winit::{UpdateMode::Continuous, WinitSettings},
-};
+use bevy::prelude::*;
 
 use bevy_replicon::prelude::*;
-pub use bevy_renet::renet;
 use bevy_replicon_renet::{
     renet::{
-        transport::{
-            ClientAuthentication, NetcodeClientTransport, NetcodeServerTransport,
-            ServerAuthentication, ServerConfig,
-        },
-        ConnectionConfig, RenetClient, RenetServer,
+        transport::{NetcodeServerTransport, ServerAuthentication, ServerConfig},
+        ConnectionConfig, RenetServer,
     },
-    RenetChannelsExt, RepliconRenetPlugins,
+    RenetChannelsExt,
 };
-use clap::Parser;
-use serde::{Deserialize, Serialize};
+
+pub use mmo_game_shared::{components::*,};
 
 pub(crate) struct MmoGameNodePlugin;
 
@@ -123,15 +114,14 @@ impl MmoGameNodePlugin {
         for FromClient { client_id, event } in move_events.read() {
             info!("received event {event:?} from {client_id:?}");
             for (player, mut position) in &mut players {
-                if *client_id == player.0 {
-                    **position += event.0 * time.delta_seconds() * MOVE_SPEED;
+                if *client_id == player.client_id {
+                    **position += event.direction * time.delta_seconds() * MOVE_SPEED;
                 }
             }
         }
     }
 }
 
-const PORT: u16 = 5000;
 const PROTOCOL_ID: u64 = 0;
 
 #[derive(Bundle)]
@@ -145,24 +135,10 @@ struct PlayerBundle {
 impl PlayerBundle {
     fn new(client_id: ClientId, position: Vec2, color: Color) -> Self {
         Self {
-            player: Player(client_id),
-            position: PlayerPosition(position),
-            color: PlayerColor(color),
+            player: Player{client_id},
+            position: PlayerPosition{position},
+            color: PlayerColor{color},
             replicated: Replicated,
         }
     }
 }
-
-/// Contains the client ID of a player.
-#[derive(Component, Serialize, Deserialize)]
-struct Player(ClientId);
-
-#[derive(Component, Deserialize, Serialize, Deref, DerefMut)]
-struct PlayerPosition(Vec2);
-
-#[derive(Component, Deserialize, Serialize)]
-struct PlayerColor(Color);
-
-/// A movement event for the controlled box.
-#[derive(Debug, Default, Deserialize, Event, Serialize)]
-struct MoveDirection(Vec2);
